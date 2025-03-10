@@ -1,0 +1,160 @@
+#!/bin/bash
+function format_duration() {
+    local seconds=$1
+    local hours=$(( seconds / 3600 ))
+    local minutes=$(( (seconds % 3600) / 60 ))
+    local seconds=$(( seconds % 60 ))
+    printf "%02d:%02d:%02d" $hours $minutes $seconds
+}
+
+function get_base_path() {
+    local url="$1"
+    local base_path
+    base_path=$(echo "$url" | sed -E '
+        s#^[^/]+://[^/]+##;    # 移除协议和域名
+        s#/$##;                # 移除结尾斜杠
+        s#^/?##                # 移除可能残留的起始斜杠
+    ')
+    echo "$base_path" | sed 's/[\/&]/\\&/g'
+}
+
+function get_filename_max_length() {
+    local term_length=$1
+    local bar_length=$2
+    local filename_max_length=$(( term_length - (bar_length + 16) ))  # 保留16字符给其他元素
+    filename_max_length=$(( filename_max_length > 10 ? filename_max_length : 10 ))  # 最小显示10字符
+    filename_max_length=$(( filename_max_length - 3 ))  # 留3字符给省略号
+    echo $filename_max_length
+}
+
+function get_local_dir() {
+    local path="$1"
+    local local_dir
+    local_dir=$(basename "$path")
+    echo "$local_dir" | sed 's/[\/&]/\\&/g'
+}
+
+function get_progress_bar_character() {
+    if echo "█" | grep -q "█"; then
+        echo "█"
+    else
+        echo "#"
+    fi
+}
+
+function get_progress_bar_length() {
+    local bar_length=$(( $1 - 50 ))
+    bar_length=$(( bar_length > 20 ? bar_length : 20 ))  # 最小20字符
+    bar_length=$(( bar_length < 60 ? bar_length : 60 ))  # 最大60字符
+    echo $bar_length
+}
+
+function interrupt_handler() {
+    echo -e "${COLOR_RED}\n- ❌ Checkout interrupted!${COLOR_RESET}" >&2
+    exit 1
+}
+
+# 注册中断处理函数
+trap interrupt_handler SIGINT
+
+# 参数检查
+if [ $# -ne 4 ]; then
+    echo "- ❔ Usage: checkout <url> <path> <username> <password>"
+    exit 1
+fi
+
+# 常量
+ESCAPED_BASE_PATH=$(get_base_path "$1")
+ESCAPED_LOCAL_DIR=$(get_local_dir "$2")
+PROGRESS_CHAR=$(get_progress_bar_character)
+SPINNER_FRAMES=("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+TERM_LENGTH=$(tput cols 2>/dev/null || echo 80)
+
+# 计算量
+BAR_LENGTH=$(get_progress_bar_length "$TERM_LENGTH")
+FILENAME_MAX_LENGTH=$(get_filename_max_length "$TERM_LENGTH" "$BAR_LENGTH")
+FILENAME_TRUNCATED_FRONT_LENGTH=$(( FILENAME_MAX_LENGTH / 2 ))
+FILENAME_TRUNCATED_BACK_LENGTH=$(( FILENAME_MAX_LENGTH - FILENAME_TRUNCATED_FRONT_LENGTH ))
+
+# 颜色支持检测
+if [ -n "$CODER" ] || [ -t 1 ]; then
+    COLOR_GREEN=$(echo -e "\033[32m")
+    COLOR_CYAN=$(echo -e "\033[36m")
+    COLOR_RED=$(echo -e "\033[31m")
+    COLOR_RESET=$(echo -e "\033[0m")
+else
+    COLOR_GREEN="" && COLOR_CYAN="" && COLOR_RED="" && COLOR_RESET=""
+fi
+
+# 获取文件总数
+echo -e "${COLOR_CYAN}- 📈 Getting file count in repo '$1'${COLOR_RESET}"
+for retry in {1..3}; do
+    TOTAL_FILE_COUNT=$(svn list -R "$1" --non-interactive --username "$3" --password "$4" 2>/dev/null | awk '!/\/$/ {count++} END {print count}')
+    [ "$TOTAL_FILE_COUNT" -gt 0 ] && break
+    echo -e "${COLOR_RED}- ❗ Retry $retry/3 getting file count...${COLOR_RESET}" >&2
+    sleep 1
+done
+[ "$TOTAL_FILE_COUNT" -eq 0 ] && { echo -e "${COLOR_RED}- ❌ Error: Unable to get file count${COLOR_RESET}"; exit 1; }
+
+# 输出进度
+START_TIME=$(date +%s)
+UPDATE_INTERVAL=$(( TOTAL_FILE_COUNT / 800 ))
+UPDATE_INTERVAL=$(( UPDATE_INTERVAL > 5 ? UPDATE_INTERVAL : 5 ))
+
+# 开始检出
+index=0
+last_update_time=0
+echo -e "${COLOR_GREEN}- ⏳ Checking out repo '$1' (Total files: $TOTAL_FILE_COUNT)${COLOR_RESET}"
+while read -r line; do
+    # 解析原始文件名
+    raw_filename=$(echo "$line" | sed -E 's/^[A-Z] +//')
+
+    # 多级路径截断处理
+    display_filename=$(echo "$raw_filename" | sed -E "
+        s#^${ESCAPED_LOCAL_DIR}/?##;
+        s#^${ESCAPED_BASE_PATH}/?##;
+        s#^/?##;
+        s/^(.{$FILENAME_TRUNCATED_FRONT_LENGTH}).*(.{$FILENAME_TRUNCATED_BACK_LENGTH})$/\1...\2/;
+        t;
+        s/^(.{${FILENAME_MAX_LENGTH}}).+/\1.../;
+    ")
+
+    # 进度计算
+    ((index++))
+    safe_percentage=$(awk "BEGIN { p=$index*100/$TOTAL_FILE_COUNT; printf \"%.2f\", p<100 ? p : 100 }")
+    filled=$(( BAR_LENGTH * index / TOTAL_FILE_COUNT ))
+    filled=$(( filled > BAR_LENGTH ? BAR_LENGTH : filled ))
+
+    # Coder环境下按时间间隔输出
+    if [ -n "$CODER" ]; then
+        current_time=$(date +%s)
+        if (( current_time - last_update_time >= UPDATE_INTERVAL )); then
+            elapsed_seconds=$(( current_time - START_TIME ))
+            formatted_elapsed_time=$(format_duration $elapsed_seconds)
+            echo -e "\r|-- Progress: ${COLOR_CYAN}${safe_percentage}%${COLOR_RESET} | Time: ${formatted_elapsed_time} | Files: ${index}/${TOTAL_FILE_COUNT}"
+            last_update_time=$current_time
+        fi
+    else
+        # 构建进度条
+        bar_content=$(eval printf "%0.s${PROGRESS_CHAR}" "{1..$filled}")
+        # 动态输出格式
+        if [ -n "$CODER" ]; then
+            echo ""
+        fi
+        printf "\r%s [%s%s%s] %6s%% %s%s%s\033[K" \
+            "${SPINNER_FRAMES[index % ${#SPINNER_FRAMES[@]}]}" \
+            "$COLOR_GREEN" \
+            "$bar_content" \
+            "$COLOR_RESET" \
+            "$safe_percentage" \
+            "$COLOR_CYAN" \
+            "$display_filename" \
+            "$COLOR_RESET"
+    fi
+done < <(svn co "$1" "$2" --non-interactive --username "$3" --password "$4" 2>&1)
+
+if [ "$index" -ne "$TOTAL_FILE_COUNT" ]; then
+    echo -e "${COLOR_RED}- Warning: Actual files checked out ($index) differ from initial count ($TOTAL_FILE_COUNT)${COLOR_RESET}" >&2
+fi
+
+echo -e "\n${COLOR_GREEN}- ✔️ Checkout completed!${COLOR_RESET}"
