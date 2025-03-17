@@ -1,6 +1,6 @@
 FROM ubuntu
 
-ADD svn-co-progress /usr/local/bin
+COPY bin /usr/local/bin
 COPY ubuntu.sources /etc/apt/sources.list.d/
 
 RUN chmod +x /usr/local/bin/svn-co-progress \
