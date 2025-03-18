@@ -1,10 +1,7 @@
 services:
   coder:
-    # This MUST be stable for our documentation and
-    # other automations.
-    # image: ghcr.io/coder/coder:${CODER_VERSION:-latest}
     build:
-      context: .
+      context: coder
       dockerfile: Dockerfile
     ports:
       - "7080:7080"
@@ -33,9 +30,9 @@ services:
     # lines and set the group ID to one that has write
     # permissions on the docker socket.
     group_add:
-     - "119" # docker group on host
+      - "119"
     volumes:
-      - ./plugins:/opt/terraform/plugins
+      - ./coder/plugins:/opt/terraform/plugins
       - /var/run/docker.sock:/var/run/docker.sock
       # Run "docker volume rm coder_coder_home" to reset the dev tunnel url (https://abc.xyz.try.coder.app).
       # This volume is not required in a production environment - you may safely remove it.
@@ -65,6 +62,14 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  marketplace:
+    build:
+      context: marketplace
+      dockerfile: Dockerfile
+    ports:
+      - "7081:7081"
+    volumes:
+      - ./marketplace/extensions:/opt/marketplace/extensions
 volumes:
   coder_data:
   coder_home:
