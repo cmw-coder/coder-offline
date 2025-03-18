@@ -18,7 +18,7 @@ else
     COLOR_GREEN="" && COLOR_CYAN="" && COLOR_RED="" && COLOR_RESET=""
 fi
 
-temp_file=$(mktemp)
+temp_file=$(mktemp --suffix=.vsix) || exit 1
 
 echo -e "${COLOR_CYAN}- 💾 Downloading extension '${EXTENSION_NAME}'${COLOR_RESET}"
 if curl -fsSL -o "$temp_file" "$EXTENSION_URL"; then
