@@ -59,7 +59,7 @@ data "coder_workspace_owner" "me" {
 }
 
 locals {
-  marketplace_url = "https://cmwcoder.h3c.com/marketplace"
+  marketplace_url = "https://cmwcoder.h3c.com:8443"
   username = data.coder_workspace_owner.me.name
   workspace = data.coder_workspace.me.name
 }
