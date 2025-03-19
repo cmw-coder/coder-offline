@@ -59,6 +59,7 @@ data "coder_workspace_owner" "me" {
 }
 
 locals {
+  marketplace_url = "https://cmwcoder.h3c.com/marketplace"
   username = data.coder_workspace_owner.me.name
   workspace = data.coder_workspace.me.name
 }
@@ -131,6 +132,12 @@ resource "coder_app" "coder-server-doc" {
   slug         = "coder-docs"
   url          = "https://cmwcoder.h3c.com/coder/docs/"
   external     = true
+}
+
+resource "coder_env" "extensions_gallery" {
+  agent_id = coder_agent.dev.id
+  name     = "EXTENSIONS_GALLERY"
+  value    = "{\"serviceUrl\":\"${local.marketplace_url}/api\", \"itemUrl\":\"${local.marketplace_url}/item\", \"resourceUrlTemplate\": \"${local.marketplace_url}/files/{publisher}/{name}/{version}/{path}\"}"
 }
 
 resource "coder_script" "code-server" {
