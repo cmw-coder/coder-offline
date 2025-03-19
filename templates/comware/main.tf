@@ -135,7 +135,7 @@ resource "coder_app" "coder-server-doc" {
 }
 
 resource "coder_env" "extensions_gallery" {
-  agent_id = coder_agent.dev.id
+  agent_id = coder_agent.main.id
   name     = "EXTENSIONS_GALLERY"
   value    = "{\"serviceUrl\":\"${local.marketplace_url}/api\", \"itemUrl\":\"${local.marketplace_url}/item\", \"resourceUrlTemplate\": \"${local.marketplace_url}/files/{publisher}/{name}/{version}/{path}\"}"
 }
