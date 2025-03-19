@@ -6,7 +6,6 @@ COPY bin /usr/local/bin
 
 ARG EXTENSION_DIR=/opt/marketplace/extensions
 RUN mkdir -p ${EXTENSION_DIR} \
-    && chown -R 1000:1000 ${EXTENSION_DIR} \
     && chmod -R 777 ${EXTENSION_DIR} \
     && chmod +x /usr/local/bin/code-marketplace
 
