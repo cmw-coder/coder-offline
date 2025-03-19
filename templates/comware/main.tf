@@ -143,7 +143,9 @@ resource "coder_script" "code-server" {
     #!/bin/bash
     echo -e "\033[36m- 📦 Installing code-server\033[0m"
     mkdir -p /tmp/code-server
-    curl -fsSL http://cmwcoder.h3c.com/coder/assets/code-server-4.97.2-linux-amd64.tar.gz | tar -C /tmp/code-server -xz --strip-components 1
+    curl -fsSL "http://cmwcoder.h3c.com/coder/assets/code-server-4.97.2-linux-amd64.tar.gz" | tar -C "/tmp/code-server" -xz --strip-components 1
+    echo -e "\033[36m- ⏳ Installing extensions\033[0m"
+    install-extension "/tmp/code-server/bin/code-server" "http://cmwcoder.h3c.com/coder/extensions/open-collaboration-tools-0.2.4.vsix"
     echo -e "\033[36m- ⏳ Starting code-server\033[0m"
     /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
     echo -e "\033[32m- ✔️ Code server started!\033[0m"

@@ -3,7 +3,7 @@ FROM ubuntu
 COPY bin /usr/local/bin
 COPY ubuntu.sources /etc/apt/sources.list.d/
 
-RUN chmod +x /usr/local/bin/svn-co-progress \
+RUN chmod +x /usr/local/bin/* \
     && apt-get update \
     && apt-get install -y sudo curl locales language-pack-en-base nano vim subversion \
     && rm -rf /var/lib/apt/lists/* \

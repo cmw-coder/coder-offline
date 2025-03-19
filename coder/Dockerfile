@@ -24,7 +24,7 @@ ADD certs/cmwcoder.* /etc/ssl/certs/
 #  Be sure to add all the providers you use in your templates to /opt/terraform/plugins
 
 # Copy all offline packages to local registry
-ADD ./mirrors /home/coder/.terraform.d/plugins/
+ADD mirrors /home/coder/.terraform.d/plugins/
 ADD filesystem-mirror.tfrc /home/coder/.terraformrc
 
 RUN chown -R coder:coder /home/coder/.terraform*
