@@ -8,10 +8,11 @@ USER root
 RUN mkdir -p /opt/terraform \
     && sed -i 's|https://dl-cdn.alpinelinux.org|http://rdmirrors.h3c.com|g' /etc/apk/repositories \
     && apk update \
-    && apk add curl unzip
+    && apk add curl unzip ca-certificates
 
-# Copy certificate and key
-ADD certs/cmwcoder.* /etc/ssl/certs/
+# Add the H3C CA certificate to the system trust store
+COPY ca-certs /usr/local/share/ca-certificates/
+RUN update-ca-certificates
 
 # Additionally, a Terraform mirror needs to be configured
 # to download the Terraform providers used in Coder templates.

@@ -1,0 +1,5 @@
+Types: deb
+URIs: http://rdmirrors.h3c.com/ubuntu/
+Suites: noble noble-updates noble-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg  

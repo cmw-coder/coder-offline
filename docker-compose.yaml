@@ -8,13 +8,6 @@ services:
       # - "7443:7443"
     environment:
       CODER_HTTP_ADDRESS: "0.0.0.0:7080"
-      # CODER_TLS_ADDRESS: "0.0.0.0:7443"
-      # CODER_TLS_ENABLE: "true"
-      # CODER_TLS_CERT_FILE: "/etc/ssl/certs/cmwcoder.pem"
-      # CODER_TLS_KEY_FILE: "/etc/ssl/certs/cmwcoder.key"
-      # CODER_TLS_CLIENT_AUTH: "none"
-      # CODER_TLS_ALLOW_INSECURE_CIPHERS: "true"
-
       CODER_ACCESS_URL: "https://coder.cmwcoder.h3c.com"
       CODER_WILDCARD_ACCESS_URL: "*.coder.cmwcoder.h3c.com"
       CODER_DOCS_URL: "https://docs.cmwcoder.h3c.com"
