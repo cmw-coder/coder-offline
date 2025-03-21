@@ -8,9 +8,9 @@ services:
       # - "7443:7443"
     environment:
       CODER_HTTP_ADDRESS: "0.0.0.0:7080"
-      CODER_ACCESS_URL: "https://coder.cmwcoder.h3c.com"
-      CODER_WILDCARD_ACCESS_URL: "*.coder.cmwcoder.h3c.com"
-      CODER_DOCS_URL: "https://docs.cmwcoder.h3c.com"
+      CODER_ACCESS_URL: "https://cmwcoder.h3c.com"
+      CODER_WILDCARD_ACCESS_URL: "*.cmwcoder.h3c.com"
+      CODER_DOCS_URL: "https://docs.cmwcoder.h3c.com:8443"
       
       CODER_BLOCK_DIRECT: "true"
       CODER_DERP_SERVER_STUN_ADDRESSES: "disable"

@@ -59,7 +59,8 @@ data "coder_workspace_owner" "me" {
 }
 
 locals {
-  marketplace_url = "https://marketplace.cmwcoder.h3c.com"
+  assets_url = "https://cmwcoder.h3c.com/coder/assets"
+  marketplace_url = "https://marketplace.cmwcoder.h3c.com:9443"
   username = data.coder_workspace_owner.me.name
   workspace = data.coder_workspace.me.name
 }
@@ -130,7 +131,7 @@ resource "coder_app" "coder-server-doc" {
   agent_id     = coder_agent.main.id
   icon         = "/emojis/1f4dd.png"
   slug         = "coder-docs"
-  url          = "https://docs.cmwcoder.h3c.com"
+  url          = "https://docs.cmwcoder.h3c.com:8443"
   external     = true
 }
 
@@ -150,7 +151,7 @@ resource "coder_script" "code-server" {
     #!/bin/bash
     echo -e "\033[36m- 📦 Installing code-server\033[0m"
     mkdir -p /tmp/code-server
-    curl -fsSL "http://assets.cmwcoder.h3c.com/code-server-4.97.2-linux-amd64.tar.gz" | tar -C "/tmp/code-server" -xz --strip-components 1
+    curl -fsSL "${local.assets_url}/code-server-4.97.2-linux-amd64.tar.gz" | tar -C "/tmp/code-server" -xz --strip-components 1
     # echo -e "\033[36m- ⏳ Installing extensions\033[0m"
     # /tmp/code-server/bin/code-server --install-extension "open-collaboration-tools-0.2.4.vsix"
     echo -e "\033[36m- ⏳ Starting code-server\033[0m"
