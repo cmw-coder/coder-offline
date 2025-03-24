@@ -190,7 +190,7 @@ resource "coder_script" "start_code_server" {
       --disable-workspace-trust \
       --locale zh-CN \
       --port 13337 \
-      --trusted-origins *\
+      --trusted-origins * \
       >${local.code_server_dir}/main.log 2>&1 &
     echo -e "\033[32m- ✔️ Code server started!\033[0m"
   EOF
