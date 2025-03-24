@@ -60,7 +60,8 @@ data "coder_workspace_owner" "me" {
 
 locals {
   assets_url = "https://cmwcoder.h3c.com/coder/assets"
-  marketplace_url = "https://marketplace.cmwcoder.h3c.com:9443"
+  code_server_dir = "/tmp/code-server"
+  marketplace_url = "https://marketplace.cmwcoder.h3c.com"
   username = data.coder_workspace_owner.me.name
   workspace = data.coder_workspace.me.name
 }
@@ -86,8 +87,8 @@ resource "coder_agent" "main" {
   }
 
   metadata {
-    display_name = "CPU Usage"
     key          = "cpu_usage"
+    display_name = "CPU Usage"
     script       = "coder stat cpu"
     interval     = 10
     timeout      = 1
@@ -95,28 +96,36 @@ resource "coder_agent" "main" {
   }
 
   metadata {
-    display_name = "RAM Usage"
     key          = "ram_usage"
+    display_name = "RAM Usage"
     script       = "coder stat mem"
     interval     = 10
     timeout      = 1
+    order = 2
   }
 
   metadata {
-    display_name = "Disk Usage"
-    interval     = 600
-    order        = 5
-    key          = "disk_usage"
-    script       = "coder stat disk $HOME"
+    key          = "code_server_version"
+    display_name = "Code Server Version"
+    script       = <<EOF
+      #!/bin/bash
+      if [ -f ${local.code_server_dir}/bin/code-server ]; then
+        ${local.code_server_dir}/bin/code-server --version | head -n1 | cut -d " " -f1
+      else
+        echo unknown
+      fi
+    EOF
+    interval     = 30
+    order        = 3
   }
 }
 
-resource "coder_app" "code-server" {
+resource "coder_app" "code_server" {
   agent_id     = coder_agent.main.id
   slug         = "code-server"
-  display_name = "code-server"
-  url          = "http://localhost:13337/?folder=/home/${local.username}/project"
+  display_name = "Code Server"
   icon         = "/icon/code.svg"
+  url          = "http://localhost:13337/?folder=/home/${local.username}/project"
   subdomain    = true
   share        = "public"
 
@@ -127,10 +136,11 @@ resource "coder_app" "code-server" {
   }
 }
 
-resource "coder_app" "coder-server-doc" {
+resource "coder_app" "coder_docs" {
   agent_id     = coder_agent.main.id
-  icon         = "/emojis/1f4dd.png"
   slug         = "coder-docs"
+  display_name = "Coder Docs"
+  icon         = "/emojis/1f4dd.png"
   url          = "https://docs.cmwcoder.h3c.com:8443"
   external     = true
 }
@@ -141,7 +151,13 @@ resource "coder_env" "extensions_gallery" {
   value    = "{\"serviceUrl\":\"${local.marketplace_url}/api\", \"itemUrl\":\"${local.marketplace_url}/item\", \"resourceUrlTemplate\": \"${local.marketplace_url}/files/{publisher}/{name}/{version}/{path}\"}"
 }
 
-resource "coder_script" "code-server" {
+resource "coder_env" "node_extra_ca_certs" {
+  agent_id = coder_agent.main.id
+  name     = "NODE_EXTRA_CA_CERTS"
+  value    = "/etc/ssl/certs/ca-certificates.crt"
+}
+
+resource "coder_script" "start_code_server" {
   agent_id     = coder_agent.main.id
   display_name = "Start Code Server"
   icon         = "/icon/code.svg"
@@ -150,12 +166,32 @@ resource "coder_script" "code-server" {
   script = <<EOF
     #!/bin/bash
     echo -e "\033[36m- 📦 Installing code-server\033[0m"
-    mkdir -p /tmp/code-server
-    curl -fsSL "${local.assets_url}/code-server-4.97.2-linux-amd64.tar.gz" | tar -C "/tmp/code-server" -xz --strip-components 1
-    # echo -e "\033[36m- ⏳ Installing extensions\033[0m"
-    # /tmp/code-server/bin/code-server --install-extension "open-collaboration-tools-0.2.4.vsix"
+    mkdir -p ${local.code_server_dir}
+    curl -fsSL "${local.assets_url}/code-server-4.98.2-linux-amd64.tar.gz" | tar -C "${local.code_server_dir}" -xz --strip-components 1
+
+    echo -e "\033[36m- ⏳ Installing extensions\033[0m"
+    ${local.code_server_dir}/bin/code-server --install-extension "alefragnani.bookmarks"
+    ${local.code_server_dir}/bin/code-server --install-extension "beaugust.blamer-vs"
+    ${local.code_server_dir}/bin/code-server --install-extension "bierner.markdown-mermaid"
+    ${local.code_server_dir}/bin/code-server --install-extension "dbaeumer.vscode-eslint@prerelease"
+    ${local.code_server_dir}/bin/code-server --install-extension "esbenp.prettier-vscode@prerelease"
+    ${local.code_server_dir}/bin/code-server --install-extension "ms-ceintl.vscode-language-pack-zh-hans"
+    ${local.code_server_dir}/bin/code-server --install-extension "ms-python.debugpy@prerelease"
+    ${local.code_server_dir}/bin/code-server --install-extension "ms-vscode.cpptools@prerelease"
+    ${local.code_server_dir}/bin/code-server --install-extension "timonwong.shellcheck"
+    ${local.code_server_dir}/bin/code-server --install-extension "johnstoncode.svn-scm"
+    ${local.code_server_dir}/bin/code-server --install-extension "redhat.vscode-xml@prerelease"
+
     echo -e "\033[36m- ⏳ Starting code-server\033[0m"
-    /tmp/code-server/bin/code-server --auth none --port 13337 >/tmp/code-server.log 2>&1 &
+    ${local.code_server_dir}/bin/code-server \
+      --auth none \
+      --disable-telemetry \
+      --disable-update-check \
+      --disable-workspace-trust \
+      --locale zh-CN \
+      --port 13337 \
+      --trusted-origins *\
+      >${local.code_server_dir}/main.log 2>&1 &
     echo -e "\033[32m- ✔️ Code server started!\033[0m"
   EOF
 }
