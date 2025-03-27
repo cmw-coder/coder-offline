@@ -188,7 +188,7 @@ resource "coder_script" "start_code_server" {
       --disable-telemetry \
       --disable-update-check \
       --disable-workspace-trust \
-      --locale zh-CN \
+      --locale zh-cn \
       --port 13337 \
       --trusted-origins * \
       >${local.code_server_dir}/main.log 2>&1 &
@@ -275,6 +275,7 @@ resource "docker_image" "main" {
     context = "./build"
     build_args = {
       USER = local.username
+      EXTENSION_VERSION = "1.98.2025031209"
     }
   }
   triggers = {

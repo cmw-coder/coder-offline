@@ -22,3 +22,9 @@ RUN useradd --groups sudo --no-create-home --shell /bin/bash ${USER} \
 
 USER ${USER}
 WORKDIR /home/${USER}
+
+# Add languagepacks.json
+ARG EXTENSION_ID=ms-ceintl.vscode-language-pack-zh-hans
+ARG EXTENSION_VERSION=1.98.2025031209
+COPY languagepacks.json /home/${USER}/.local/share/code-server/
+RUN sed -i "s|%USER%|${USER}|g;s|%EXTENSION_ID%|${EXTENSION_ID}|g;s|%EXTENSION_VERSION%|${EXTENSION_VERSION}|g" /home/${USER}/.local/share/code-server/languagepacks.json
