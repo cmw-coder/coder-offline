@@ -1,0 +1,37 @@
+services:
+  coder:
+    build:
+      context: coder
+      dockerfile: Dockerfile
+    ports:
+      - "7080:7080"
+    environment:
+      CODER_HTTP_ADDRESS: "0.0.0.0:7080"
+      CODER_ACCESS_URL: "https://coder.h3c.com"
+      CODER_WILDCARD_ACCESS_URL: "*.coder.h3c.com"
+      CODER_DOCS_URL: "https://coder-docs.cmwcoder.h3c.com"
+      
+      CODER_BLOCK_DIRECT: "true"
+      CODER_DERP_SERVER_REGION_ID: ${CODER_DERP_SERVER_REGION_ID:-999}
+      CODER_DERP_SERVER_REGION_NAME: "${CODER_DERP_SERVER_REGION_NAME:-Coder Embedded Relay}"
+      CODER_DERP_SERVER_RELAY_URL: ${CODER_DERP_SERVER_RELAY_URL}
+      CODER_DERP_SERVER_STUN_ADDRESSES: "disable"
+      CODER_PG_CONNECTION_URL: "postgresql://${POSTGRES_USER:-username}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-coder.h3c.com}/${POSTGRES_DB:-coder}?sslmode=disable"
+      CODER_DISABLE_NETWORK_TELEMETRY: "true"
+      CODER_UPDATE_CHECK: "false"
+    # If the coder user does not have write permissions on
+    # the docker socket, you can uncomment the following
+    # lines and set the group ID to one that has write
+    # permissions on the docker socket.
+    group_add:
+      - "${DOCKER_GROUP:-137}"
+    volumes:
+      - ./coder/plugins:/opt/terraform/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Run "docker volume rm coder_coder_home" to reset the dev tunnel url (https://abc.xyz.try.coder.app).
+      # This volume is not required in a production environment - you may safely remove it.
+      # Coder can recreate all the files it needs on restart.
+      # - coder_home:/home/coder
+volumes:
+  coder_data:
+  coder_home:

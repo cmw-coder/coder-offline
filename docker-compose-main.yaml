@@ -5,17 +5,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "7080:7080"
-      # - "7443:7443"
     environment:
       CODER_HTTP_ADDRESS: "0.0.0.0:7080"
-      CODER_ACCESS_URL: "https://cmwcoder.h3c.com"
-      CODER_WILDCARD_ACCESS_URL: "*.cmwcoder.h3c.com"
-      CODER_DOCS_URL: "https://docs.cmwcoder.h3c.com:8443"
+      CODER_ACCESS_URL: "https://coder.h3c.com"
+      CODER_WILDCARD_ACCESS_URL: "*.coder.h3c.com"
+      CODER_DOCS_URL: "https://coder-docs.cmwcoder.h3c.com"
       
       CODER_BLOCK_DIRECT: "true"
+      CODER_DERP_SERVER_RELAY_URL: ${CODER_DERP_SERVER_RELAY_URL}
       CODER_DERP_SERVER_STUN_ADDRESSES: "disable"
-      CODER_PG_CONNECTION_URL: "postgresql://${POSTGRES_USER:-username}:${POSTGRES_PASSWORD:-password}@database/${POSTGRES_DB:-coder}?sslmode=disable"
-      # CODER_REDIRECT_TO_ACCESS_URL: "true"
+      CODER_PG_CONNECTION_URL: "postgresql://${POSTGRES_USER:-username}:${POSTGRES_PASSWORD:-password}@${POSTGRES_HOST:-coder.h3c.com}/${POSTGRES_DB:-coder}?sslmode=disable"
       CODER_DISABLE_NETWORK_TELEMETRY: "true"
       CODER_UPDATE_CHECK: "false"
     # If the coder user does not have write permissions on
@@ -23,7 +22,7 @@ services:
     # lines and set the group ID to one that has write
     # permissions on the docker socket.
     group_add:
-      - "119"
+      - "${DOCKER_GROUP:-137}"
     volumes:
       - ./coder/plugins:/opt/terraform/plugins
       - /var/run/docker.sock:/var/run/docker.sock
@@ -55,14 +54,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-  marketplace:
-    build:
-      context: marketplace
-      dockerfile: Dockerfile
-    ports:
-      - "7081:7081"
-    volumes:
-      - ./marketplace/extensions:/opt/marketplace/extensions
 volumes:
   coder_data:
   coder_home:
