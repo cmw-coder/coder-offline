@@ -3,6 +3,7 @@ services:
     build:
       context: coder
       dockerfile: Dockerfile
+      no_cache: true
     ports:
       - "7080:7080"
     environment:

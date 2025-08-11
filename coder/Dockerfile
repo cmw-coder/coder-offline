@@ -1,4 +1,4 @@
-FROM ghcr.io/coder/coder:v2.20.2
+FROM registry.coder.h3c.com/coder/coder:v2.24.3
 
 USER root
 
