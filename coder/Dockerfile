@@ -1,4 +1,4 @@
-FROM registry.coder.h3c.com/coder/coder:v2.24.3
+FROM registry.coder.h3c.com/coder/coder:v2.26.3
 
 USER root
 

@@ -28,6 +28,7 @@ services:
       - "${DOCKER_GROUP:-137}"
     volumes:
       - ./coder/plugins:/opt/terraform/plugins
+      - /opt/coder-assets:/opt/coder-assets:ro
       - /var/run/docker.sock:/var/run/docker.sock
       # Run "docker volume rm coder_coder_home" to reset the dev tunnel url (https://abc.xyz.try.coder.app).
       # This volume is not required in a production environment - you may safely remove it.
