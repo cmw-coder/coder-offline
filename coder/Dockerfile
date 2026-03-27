@@ -8,7 +8,7 @@ USER root
 RUN mkdir -p /opt/terraform \
     && sed -i 's|https://dl-cdn.alpinelinux.org|http://rdmirrors.h3c.com|g' /etc/apk/repositories \
     && apk update \
-    && apk add curl unzip ca-certificates
+    && apk add curl jq unzip ca-certificates subversion
 
 # Add the H3C CA certificate to the system trust store
 COPY ca-certs /usr/local/share/ca-certificates/
